@@ -38,6 +38,7 @@ import {
 import InvoiceStatusBadge from '@/components/invoice-status-badge';
 import { formatCurrency } from '@/lib/currencies';
 import { roundToTwoDecimals } from '@/lib/money';
+import { buildInvoiceMailData } from '@/lib/invoice-mail';
 
 interface InvoiceDetailProps {
   params: Promise<{ id: string }>;
@@ -249,6 +250,13 @@ export default function InvoiceDetailPage({ params }: InvoiceDetailProps) {
     });
   };
 
+  const mailData = buildInvoiceMailData({
+    invoiceNumber: invoice.invoiceNumber,
+    businessName,
+    clientEmail: invoice.client?.email,
+    publicToken: invoice.publicToken,
+  });
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-12">
       {/* Top Action Bar */}
@@ -291,6 +299,29 @@ export default function InvoiceDetailPage({ params }: InvoiceDetailProps) {
             <span>Print</span>
           </button>
 
+          {mailData.hasClientEmail ? (
+            <a
+              href={mailData.gmailComposeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 transition shadow-xs"
+              title={`Compose email to ${invoice.client.email}`}
+            >
+              <Mail className="w-3.5 h-3.5" />
+              <span>Mail</span>
+            </a>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-100 text-slate-400 text-xs font-semibold cursor-not-allowed shadow-xs"
+              title="Client email is unavailable."
+            >
+              <Mail className="w-3.5 h-3.5" />
+              <span>Mail</span>
+            </button>
+          )}
+
           <Link
             href={`/invoices/${invoice.id}/edit`}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 transition shadow-xs"
@@ -331,6 +362,29 @@ export default function InvoiceDetailPage({ params }: InvoiceDetailProps) {
             {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
             <span>{copiedLink ? 'Copied!' : 'Copy Link'}</span>
           </button>
+
+          {mailData.hasClientEmail ? (
+            <a
+              href={mailData.gmailComposeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition shadow-2xs"
+              title={`Compose email to ${invoice.client.email}`}
+            >
+              <Mail className="w-3.5 h-3.5" />
+              <span>Mail</span>
+            </a>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-slate-400 text-xs font-semibold cursor-not-allowed shadow-2xs"
+              title="Client email is unavailable."
+            >
+              <Mail className="w-3.5 h-3.5" />
+              <span>Mail</span>
+            </button>
+          )}
 
           <Link
             href={`/invoice/${invoice.publicToken}`}

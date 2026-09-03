@@ -16,7 +16,8 @@
     "test:concurrency": "tsx scripts/test-concurrency.ts",
     "test:phase4": "tsx scripts/test-phase4.ts",
     "test:surgical": "tsx scripts/test-surgical-fixes.ts",
-    "test:polish": "tsx scripts/test-dashboard-polish.ts"
+    "test:polish": "tsx scripts/test-dashboard-polish.ts",
+    "test:mail": "tsx scripts/test-mail-invoice.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
