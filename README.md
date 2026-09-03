@@ -2,8 +2,9 @@
 
 ## Live Demo
 
-- **Live Application**: [https://bill-flow-delta.vercel.app/](https://bill-flow-delta.vercel.app/)
-- **Public Demo Invoice**: [https://bill-flow-delta.vercel.app/invoice/demo-token-inv-006-sent](https://bill-flow-delta.vercel.app/invoice/demo-token-inv-006-sent)
+- **Live Application:** [https://bill-flow-delta.vercel.app/](https://bill-flow-delta.vercel.app/)
+- **Public Demo Invoice:** [https://bill-flow-delta.vercel.app/invoice/demo-token-inv-006-sent](https://bill-flow-delta.vercel.app/invoice/demo-token-inv-006-sent)
+
 
 > **Note**: The public demo invoice is accessible anonymously without authentication.
 
