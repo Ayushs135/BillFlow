@@ -1,0 +1,151 @@
+// ============================================================================
+// BillFlow — PostgreSQL Database Schema
+// 
+// Architecture & Multi-Tenancy:
+// - All core entities (Client, Invoice, Settings, InvoiceSequence) are strictly scoped to User (userId).
+// - Exact Decimal arithmetic for all financial amounts (subtotal, tax, discount, total, rate, quantity).
+// - PostgreSQL BYTEA binary storage for business logos (logoData & logoMimeType) on the Settings model.
+// - Concurrency-safe sequential numbering via dedicated `invoice_sequences` table.
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+}
+
+model User {
+  id           String    @id @default(uuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Multi-tenant relations
+  clients         Client[]
+  invoices        Invoice[]
+  settings        Settings?
+  invoiceSequence InvoiceSequence?
+
+  @@map("users")
+}
+
+model Client {
+  id        String    @id @default(uuid())
+  userId    String
+  name      String
+  email     String
+  company   String?
+  address   String?
+  phone     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relationships
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoices  Invoice[]
+
+  // Indexes for multi-tenant querying and searching
+  @@index([userId])
+  @@index([userId, name])
+  @@map("clients")
+}
+
+model Invoice {
+  id            String        @id @default(uuid())
+  userId        String
+  clientId      String
+  invoiceNumber String
+  issueDate     DateTime
+  dueDate       DateTime
+  status        InvoiceStatus @default(DRAFT)
+  subtotal      Decimal       @db.Decimal(12, 2)
+  tax           Decimal       @default(0) @db.Decimal(12, 2)
+  discount      Decimal       @default(0) @db.Decimal(12, 2)
+  total         Decimal       @db.Decimal(12, 2)
+  notes         String?       @db.Text
+  publicToken   String        @unique @default(uuid())
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relationships
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client        Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  items         InvoiceItem[]
+
+  // Unique constraint ensuring invoice numbers are unique per user tenant
+  @@unique([userId, invoiceNumber])
+
+  // Indexes for performance optimization:
+  // - Fast user-scoped queries
+  // - Client invoice filtering
+  // - Status filtering on dashboard & invoice table
+  // - Due date checks for overdue status and chronological sorting
+  // - Revenue reporting over time
+  @@index([userId])
+  @@index([clientId])
+  @@index([userId, status])
+  @@index([userId, dueDate])
+  @@index([userId, issueDate])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  description String
+  quantity    Decimal  @db.Decimal(10, 2)
+  rate        Decimal  @db.Decimal(12, 2)
+  amount      Decimal  @db.Decimal(12, 2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@index([invoiceId])
+  @@map("invoice_items")
+}
+
+model Settings {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  businessName  String?
+  logoUrl       String?  @db.Text
+  logoData      Bytes?
+  logoMimeType  String?
+  currency      String   @default("USD")
+  invoicePrefix String   @default("INV-")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relationships
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("settings")
+}
+
+model InvoiceSequence {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  nextNumber Int      @default(1)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relationships
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("invoice_sequences")
+}
