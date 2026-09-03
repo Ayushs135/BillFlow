@@ -190,7 +190,10 @@ export default function InvoiceDetailPage({ params }: InvoiceDetailProps) {
 
   const handleCopyPublicLink = () => {
     if (!invoice?.publicToken) return;
-    const url = `${window.location.origin}/invoice/${invoice.publicToken}`;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+    const url = baseUrl
+      ? `${baseUrl.replace(/\/$/, '')}/invoice/${invoice.publicToken}`
+      : `/invoice/${invoice.publicToken}`;
     navigator.clipboard.writeText(url);
     setCopiedLink(true);
     setToastMessage('Public invoice link copied to clipboard.');
@@ -233,7 +236,10 @@ export default function InvoiceDetailPage({ params }: InvoiceDetailProps) {
   const currency = invoice.user?.settings?.currency || 'USD';
   const businessName = invoice.user?.settings?.businessName || invoice.user?.name || 'BillFlow Invoicing';
   const logoUrl = invoice.user?.settings?.logoUrl;
-  const publicUrl = typeof window !== 'undefined' ? `${window.location.origin}/invoice/${invoice.publicToken}` : `/invoice/${invoice.publicToken}`;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+  const publicUrl = baseUrl
+    ? `${baseUrl.replace(/\/$/, '')}/invoice/${invoice.publicToken}`
+    : `/invoice/${invoice.publicToken}`;
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {

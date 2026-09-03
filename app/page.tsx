@@ -124,7 +124,7 @@ export default async function HomePage() {
             <div className="pt-3 flex flex-col sm:flex-row items-center justify-center gap-2.5">
               <span className="text-xs text-slate-500 font-medium">Want to see a sample invoice?</span>
               <Link
-                href={`/invoice/${demoInvoice?.publicToken || demoToken}`}
+                href={`${(process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/$/, '')}/invoice/${demoInvoice?.publicToken || demoToken}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition shadow-xs group"

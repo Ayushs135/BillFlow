@@ -37,14 +37,18 @@ export default function DemoPublicInvoiceCard({
     );
   }
 
-  const publicPath = `/invoice/${invoice.publicToken}`;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+  const publicInvoiceUrl = baseUrl
+    ? `${baseUrl.replace(/\/$/, '')}/invoice/${invoice.publicToken}`
+    : `/invoice/${invoice.publicToken}`;
 
   const handleCopyLink = async () => {
     try {
-      const fullUrl =
-        typeof window !== 'undefined'
-          ? `${window.location.origin}${publicPath}`
-          : publicPath;
+      const fullUrl = baseUrl
+        ? `${baseUrl.replace(/\/$/, '')}/invoice/${invoice.publicToken}`
+        : typeof window !== 'undefined'
+        ? `${window.location.origin}/invoice/${invoice.publicToken}`
+        : `/invoice/${invoice.publicToken}`;
       await navigator.clipboard.writeText(fullUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
@@ -86,7 +90,7 @@ export default function DemoPublicInvoiceCard({
 
       <div className="flex items-center gap-2 pt-1">
         <Link
-          href={publicPath}
+          href={publicInvoiceUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="flex-1 inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition shadow-xs cursor-pointer"

@@ -26,6 +26,7 @@ import { formatCurrency, getCurrencySymbol } from '@/lib/currencies';
 import { getEffectiveStatus } from '@/lib/money';
 import InvoiceStatusBadge from '@/components/invoice-status-badge';
 import IncomeChart, { MonthlyIncome } from '@/components/income-chart';
+import DemoPublicInvoiceCard from '@/components/demo-public-invoice-card';
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
@@ -48,6 +49,7 @@ export default async function DashboardPage() {
     settings,
     recentInvoices,
     paidInvoicesPeriod,
+    demoInvoice,
   ] = await Promise.all([
     // 1. Earned: Sum of PAID invoices
     prisma.invoice.aggregate({
@@ -380,6 +382,22 @@ export default async function DashboardPage() {
 
         {/* Overview, Demo Link & Quick Links (4 Cols) */}
         <div className="lg:col-span-4 space-y-6">
+          <DemoPublicInvoiceCard
+            invoice={
+              demoInvoice
+                ? {
+                    id: demoInvoice.id,
+                    invoiceNumber: demoInvoice.invoiceNumber,
+                    publicToken: demoInvoice.publicToken,
+                    status: demoInvoice.status,
+                    total: demoInvoice.total.toNumber(),
+                    clientName: demoInvoice.client.name,
+                  }
+                : null
+            }
+            currency={currency}
+          />
+
           {/* Business & Multi-Tenant Summary */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-4">
             <h2 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-2">
