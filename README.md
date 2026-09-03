@@ -1,104 +1,75 @@
 # BillFlow
 
-BillFlow is a modern invoicing SaaS platform built for freelancers and small studios to manage clients, create and track invoices, and accept payments with public shareable links.
+## Live Demo
+
+- **Live Application**: [https://bill-flow-delta.vercel.app/](https://bill-flow-delta.vercel.app/)
+- **Public Demo Invoice**: [https://bill-flow-delta.vercel.app/invoice/demo-token-inv-006-sent](https://bill-flow-delta.vercel.app/invoice/demo-token-inv-006-sent)
+
+> **Note**: The public demo invoice is accessible anonymously without authentication.
+
+---
+
+## Project Overview
+
+**BillFlow** is a modern multi-tenant invoicing SaaS platform designed for freelancers and small studios. It provides an end-to-end billing workflow to manage clients, create and customize invoices with dynamic line items, track payment statuses, share token-gated public portals with PDF exports, and monitor business revenue analytics.
+
+---
+
+## Key Features
+
+- **Authentication & Protected Dashboard**: Secure stateless session cookies via JWT (`jose`), password hashing with `bcryptjs`, and Edge Middleware route protection.
+- **Multi-Tenant Client Management**: Fully isolated client directory with server-side search across names, companies, and email addresses.
+- **Invoice Lifecycle Management**: Complete invoice CRUD with dynamic line items and real-time status transitions across `DRAFT`, `SENT`, `PAID`, and `OVERDUE`.
+- **Percentage-Based Tax & Discount Calculations**: Server-enforced exact calculations with Prisma Decimal arithmetic preventing floating-point rounding issues.
+- **Concurrency-Safe Sequential Numbering**: Database-backed atomic sequence counter providing concurrency-safe, collision-free and tenant-scoped sequential numbering (e.g., `INV-0001`, `INV-0002`).
+- **Multi-Currency Support**: Native currency formatting for USD, EUR, GBP, INR (₹), CAD, AUD, JPY, SGD, and AED.
+- **PDF Generation & Browser Printing**: Vector PDF creation powered by `jspdf` and styled `@media print` stylesheets for high-resolution document printing.
+- **Business Logo Upload & PostgreSQL Storage**: Logo image upload with binary (`BYTEA`) storage in PostgreSQL, rendered seamlessly on invoice views and vector PDFs.
+- **Public Invoice Links**: Token-gated public client portal allowing clients to review invoices and download PDFs without logging in.
+- **Gmail "Mail Invoice" Integration**: One-click Gmail compose integration with URL-encoded recipient, subject, and public invoice link.
+- **Revenue Analytics Dashboard**: Real-time financial summary metrics (Total Earned, Outstanding, Overdue) and a 6-month monthly revenue distribution chart.
+- **Demo Account & Seeded Data**: Pre-configured demo account populated with multi-month realistic invoicing data.
 
 ---
 
 ## Tech Stack
 
-- **Framework**: [Next.js 16](https://nextjs.org/) (App Router, Server Actions & Route Handlers)
+- **Framework**: [Next.js 16](https://nextjs.org/) (App Router, Server Actions, Route Handlers)
 - **Frontend**: [React 19](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), [Tailwind CSS v4](https://tailwindcss.com/), [Lucide React](https://lucide.dev/)
-- **Database**: [PostgreSQL](https://www.postgresql.org/)
-- **ORM**: [Prisma ORM](https://www.prisma.io/)
-- **PDF Generation**: [jsPDF](https://github.com/parallax/jsPDF) vector document generation
-- **Authentication**: JWT via [jose](https://github.com/panva/jose) with HTTP-only secure cookies and [bcryptjs](https://github.com/dcodeIO/bcrypt.js) password encryption
-- **Validation**: [Zod](https://zod.dev/) for strict server-side schema verification
+- **Database**: [PostgreSQL](https://www.postgresql.org/) ([Neon](https://neon.tech/))
+- **ORM**: [Prisma 6](https://www.prisma.io/)
+- **Authentication & Security**: [jose](https://github.com/panva/jose) (JWT) & [bcryptjs](https://github.com/dcodeIO/bcrypt.js)
+- **PDF Engine**: [jsPDF](https://github.com/parallax/jsPDF)
+- **Deployment**: [Vercel](https://vercel.com/)
 
 ---
 
-## Features Implemented Across Phases
+## Local Setup
 
-### Phase 2: Authentication, Client Management & Settings
-- **Authentication & Sessions**: Registration (`/signup`), login (`/login`), logout (`/api/auth/logout`), HTTP-only encrypted JWT session cookies.
-- **Route Guarding**: Next.js Edge Middleware protecting `/dashboard`, `/clients`, `/settings`, and `/invoices`.
-- **Client Directory**: Multi-tenant CRUD operations with server-side debounced search and delete confirmation dialogs.
-- **Settings & Branding**: Business name, currency configuration (USD, EUR, GBP, INR, CAD, AUD, JPY, SGD, AED), invoice prefixes, and logo URL management.
-
-### Phase 3: Invoicing, Dynamic Line Items & Status Lifecycle
-- **Interactive Invoice Creation (`/invoices/new`)**:
-  - Client selection scoped strictly to authenticated user's client list.
-  - Concurrency-safe sequential invoice numbers (e.g., `INV-0001`, `INV-0002`) based on tenant prefix.
-  - Dynamic line items: add, edit, and remove rows with real-time row totals (`qty × rate`).
-  - Fixed-amount Tax and Discount calculation with client-side preview and strict server-side Decimal re-computation.
-  - Validation: due date cannot precede issue date; discount cannot exceed `subtotal + tax`.
-- **Atomic Database Operations**: Creation and updates use Prisma `$transaction` ensuring invoices and line items are committed atomically.
-- **Invoice Listing & Filtering (`/invoices`)**:
-  - Server-side search across invoice numbers, client names, company names, and emails.
-  - Server-side status filters: `ALL`, `DRAFT`, `SENT`, `PAID`, `OVERDUE`.
-  - Client-specific invoice filtering.
-  - Server-side sorting: Newest, Oldest, Due Date, Highest Amount, Lowest Amount.
-  - Server-side pagination with metadata (`page`, `pageSize`, `totalCount`, `totalPages`).
-  - Responsive desktop table and mobile card views.
-- **Invoice Detail View (`/invoices/[id]`)**:
-  - Full billing summary displaying user business branding, client contact details, line-item breakdown, and notes.
-  - Quick action toolbar: Edit (`/invoices/[id]/edit`), Delete (with cascade confirmation modal), and Mark as Sent.
-- **Automatic Overdue Detection**:
-  - Real-time computation converts unpaid invoices (`DRAFT` or `SENT`) past their due date to `OVERDUE`.
-  - Paid invoices (`PAID`) strictly remain `PAID` regardless of due date.
-
-### Phase 4: Public Invoice Portal, Payment Simulation, PDFs & Dashboard Analytics
-- **Public Invoice Portal (`/invoice/[token]`)**:
-  - Unauthenticated access via unique `publicToken`.
-  - Zero sensitive data exposure: no passwords, session tokens, or unrelated invoices leaked.
-  - Responsive paper-styled layout displaying business branding, client details, line items, and totals.
-  - One-click public link copying and browser print stylesheet.
-- **Public Simulated Payment (`POST /api/public/invoices/[token]/pay`)**:
-  - Interactive payment simulation modal with card inputs (Name, Card Number, Expiry, CVV).
-  - *Note: Demo sandbox simulation mode only — no real card details are charged or stored.*
-  - Concurrency-safe atomic status transition from unpaid/overdue states directly to `PAID`.
-  - Double-payment protection rejecting repeated payment attempts on settled invoices.
-- **PDF Generation & Export**:
-  - Vector PDF engine ([`lib/pdf-generator.ts`](file:///D:/vs/BillFlow/lib/pdf-generator.ts)) generating client-ready invoices with headers, line items, totals, and branding.
-  - Authenticated download (`GET /api/invoices/[id]/pdf`) with multi-tenant verification.
-  - Public portal download (`GET /api/public/invoices/[token]/pdf`).
-- **Dashboard Analytics & Income Chart (`/dashboard`)**:
-  - Real-time aggregate metric cards: **Earned** (Sum of `PAID`), **Outstanding** (Sum of `SENT`), **Overdue** (Sum of past-due unpaid).
-  - Responsive **Income Over Time** SVG bar chart visualizing settled revenue across the last 6 months.
-  - **Recent Invoices** preview table with status badges and quick view actions.
-
----
-
-## Local Setup & Installation
-
-### 1. Install Dependencies
+### 1. Clone & Install Dependencies
 
 ```bash
+git clone https://github.com/Ayushs135/BillFlow.git
+cd BillFlow
 npm install
 ```
 
-### 2. Configure Environment
+### 2. Configure Environment Variables
 
-Copy `.env.example` to `.env` and configure your PostgreSQL database credentials:
-
-```bash
-cp .env.example .env
-```
+Create a `.env` file in the root directory:
 
 ```env
-DATABASE_URL="postgresql://USER:PASSWORD@127.0.0.1:5432/billflow?schema=public"
-JWT_SECRET="billflow-local-development-secret-jwt-key-32chars"
+DATABASE_URL="your-postgresql-connection-string"
+JWT_SECRET="your-secret-key"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
-### 3. Apply Migrations & Seed Database
+### 3. Setup Database & Seed Data
 
 ```bash
-npm run prisma:migrate
+npx prisma migrate dev
 npm run prisma:seed
 ```
-
-#### Demo Credentials:
-- **Email**: `demo@billflow.dev`
-- **Password**: `DemoPassword123!`
 
 ### 4. Start Development Server
 
@@ -106,67 +77,50 @@ npm run prisma:seed
 npm run dev
 ```
 
-Visit [http://localhost:3000](http://localhost:3000).
+The application runs locally at [http://localhost:3000](http://localhost:3000).
 
 ---
 
-## API Endpoints
+## Production Deployment
 
-### Authentication
-- `POST /api/auth/signup` — Register account and set session cookie.
-- `POST /api/auth/login` — Authenticate and set session cookie.
-- `POST /api/auth/logout` — Clear session cookie.
-- `GET  /api/auth/me` — Get current user profile.
-
-### Clients (Multi-Tenant Scoped)
-- `GET    /api/clients` — List clients (supports `?search=...`).
-- `POST   /api/clients` — Create new client.
-- `GET    /api/clients/[id]` — Retrieve client details.
-- `PUT    /api/clients/[id]` — Update client details.
-- `DELETE /api/clients/[id]` — Delete client.
-
-### Invoices (Multi-Tenant Scoped)
-- `GET    /api/invoices` — List invoices (supports `?search=...`, `?status=...`, `?clientId=...`, `?sort=...`, `?page=...`).
-- `POST   /api/invoices` — Atomically create invoice with line items.
-- `GET    /api/invoices/next-number` — Fetch next sequential invoice number.
-- `GET    /api/invoices/[id]` — Retrieve invoice details with line items and client info.
-- `GET    /api/invoices/[id]/pdf` — Download authenticated vector invoice PDF.
-- `PUT    /api/invoices/[id]` — Atomically update invoice and line items.
-- `PATCH  /api/invoices/[id]/status` — Quick status update (e.g., mark `SENT`).
-- `DELETE /api/invoices/[id]` — Delete invoice and associated line items.
-
-### Public Invoices & Payments (Unauthenticated)
-- `GET  /api/public/invoices/[token]` — Retrieve sanitized invoice details by public token.
-- `POST /api/public/invoices/[token]/pay` — Execute simulated payment and atomically transition status to `PAID`.
-- `GET  /api/public/invoices/[token]/pdf` — Download public invoice PDF.
-
-### Settings (Multi-Tenant Scoped)
-- `GET /api/settings` — Get user business settings.
-- `PUT /api/settings` — Update business profile, currency, prefix, and logo.
+- **GitHub to Vercel**: Connect the GitHub repository directly to Vercel for continuous deployment.
+- **Production Database**: Provision a serverless PostgreSQL database using [Neon](https://neon.tech/).
+- **Required Vercel Environment Variables**:
+  - `DATABASE_URL`: Production PostgreSQL connection string from Neon.
+  - `JWT_SECRET`: Secure 32+ character random string for signing session JWTs.
+  - `NEXT_PUBLIC_APP_URL`: Production domain (`https://bill-flow-delta.vercel.app`).
+- **Production Migrations**:
+  ```bash
+  npx prisma migrate deploy
+  ```
+- **Production Build**:
+  The production build script is configured in `package.json` to ensure the Prisma Client is generated before compiling:
+  ```json
+  "build": "prisma generate && next build"
+  ```
 
 ---
 
-## Available Scripts
+## Demo Credentials
 
-| Script | Command | Description |
-|---|---|---|
-| `dev` | `npm run dev` | Starts Next.js development server on `http://localhost:3000` |
-| `build` | `npm run build` | Builds production Next.js application |
-| `start` | `npm run start` | Starts production server |
-| `lint` | `npm run lint` | Runs ESLint checks |
-| `test:phase2` | `npm run test:phase2` | Runs automated Phase 2 auth and client test suite |
-| `test:phase3` | `npm run test:phase3` | Runs automated Phase 3 invoice creation, calculation, and filtering test suite |
-| `test:concurrency` | `npm run test:concurrency` | Runs high-concurrency invoice sequence numbering test suite |
-| `test:phase4` | `npm run test:phase4` | Runs automated Phase 4 public invoice, payment, analytics, and PDF test suite |
-| `prisma:migrate` | `npm run prisma:migrate` | Applies Prisma migrations |
-| `prisma:seed` | `npm run prisma:seed` | Seeds database with demo test data |
-| `prisma:studio` | `npm run prisma:studio` | Opens Prisma Studio GUI |
+Log in with the pre-seeded demo account to access the authenticated dashboard:
+
+- **Email**: `demo@billflow.dev`
+- **Password**: `DemoPassword123!`
 
 ---
 
-## Multi-Tenant Security Guarantees
+## Verification
 
-1. **Server-Derived Identity**: The `userId` is always extracted from the authenticated session JWT. Client-supplied user IDs are rejected.
-2. **Compound Ownership Verification**: Every query on `Invoice`, `InvoiceItem`, and `Client` enforces `userId: currentUser.id`.
-3. **Public Token Isolation**: Public routes strictly expose only the invoice mapped to the exact `publicToken`. Password hashes and internal account data are omitted.
-4. **Precision Decimal Calculations**: All financial values are computed on the server using Prisma `Decimal` arithmetic.
+BillFlow includes comprehensive test suites, strict TypeScript validation, ESLint linting, and production build verification:
+
+- `npm run test:surgical` — Pre-deployment verification suite
+- `npm run test:phase2` — Authentication and client management tests
+- `npm run test:phase3` — Invoicing engine, calculations, and search tests
+- `npm run test:concurrency` — Concurrency-safe sequential invoice numbering tests
+- `npm run test:phase4` — Public portal, simulated payment, and analytics tests
+- `npm run test:polish` — Dashboard analytics and scaling tests
+- `npm run test:mail` — Gmail compose integration and URL encoding tests
+- `npx tsc --noEmit` — TypeScript type checking (0 errors)
+- `npm run lint` — ESLint code quality checks (0 errors, 0 warnings)
+- `npm run build` — Production build compilation
